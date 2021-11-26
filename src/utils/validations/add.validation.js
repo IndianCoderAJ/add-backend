@@ -34,6 +34,6 @@ exports.deleteAddSchema = Joi.object().keys({
 exports.listAddSchema = Joi.object().keys({
     page:Joi.number().required(),
     perPage:Joi.number().required(),
-    filter:Joi.object().required(),
+    filter:Joi.array().required(),
     sort:Joi.object().required(),
 });

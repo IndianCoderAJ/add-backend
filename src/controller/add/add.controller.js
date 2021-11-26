@@ -1,9 +1,12 @@
 const addModel = require("../../Models/add.model");
-const { getPagination,getPagingData } = require("../../utils/paginations");
+const { getPagination,getPagingData,getFilter } = require("../../utils/paginations");
 const { createAddSchema, updateAddSchema, listAddSchema, getSingleAddSchema, deleteAddSchema } = require("../../utils/validations/add.validation");
 const { ValidationError}  = require('joi');
 const {getMetadata} = require('page-metadata-parser');
 const domino = require('domino');
+const axios = require('axios');
+const { dummyData } = require("../../utils/data");
+const { getMetadataCustom } = require("../../utils/common");
 
 // list add
 exports.listHandler = async(req,res) => {
@@ -13,7 +16,8 @@ exports.listHandler = async(req,res) => {
     const { limit, offset } = getPagination(req.body.page, req.body.perPage);
 
     const data = { rows: [], count: 0 };
-    let filter = req.body.filter;
+
+    let filter = getFilter(req.body.filter);
     let sort = {}
 
     if(req.body.sort.field == 'created_at') {
@@ -83,13 +87,8 @@ exports.createHandler = async(req,res) => {
      await createAddSchema.validateAsync(req.body);
 
     //get meta data..
-    let url = req.body.content_url;
-    const response = await fetch(url,{mode:'no-cors'});
-    const html = response.text();
-    const doc = domino.createWindow(html).document;
-    const metadata = getMetadata(doc, url);
-    req.body.metadata = JSON.stringify(metadata)
-
+    let {metadata} = await getMetadataCustom(req.body);
+    req.body.metadata = metadata;
      let createAdd = await addModel.create({
          ...req.body
      }) 
@@ -101,6 +100,7 @@ exports.createHandler = async(req,res) => {
      })
      
  }catch(error){
+     console.log(error);
     if (error instanceof ValidationError) {
         return res.status(400).json({
             error: error.message,
@@ -121,23 +121,30 @@ exports.updateHandler = async(req,res) => {
      await updateAddSchema.validateAsync(req.body);
 
     //  check name is exist.
-    let existAdd = await addModel.findOne({name:req.body.name});
+    let existAdd = await addModel.findOne(
+                                         {name:req.body.name,
+                                         _id:{ $ne:req.body._id
+                                        }});
     if(existAdd){
         return res.status(400).json({
             error:"Add with this name is exits.",
             success:false
         })
     }
-    
+
+    let preAdd = await addModel.findOne({_id:req.body._id});
+
+    if(!preAdd){
+        return res.status(400).json({
+            error:"Add not found.",
+            success:false
+        })
+    }
     // check content url changed
-    if(existAdd.content_url !== req.body.content_url){
+    if(preAdd.content_url !== req.body.content_url){
         //get meta data..
-        let url = req.body.content_url;
-        const response = await fetch(url,{mode:'no-cors'});
-        const html = response.text();
-        const doc = domino.createWindow(html).document;
-        const metadata = getMetadata(doc, url);
-        req.body.metadata = JSON.stringify(metadata)
+        let {metadata} = await getMetadataCustom(req.body);
+        req.body.metadata = metadata;
    }
 
      
@@ -160,6 +167,7 @@ exports.updateHandler = async(req,res) => {
      })
      
  }catch(error){
+     console.log(error);
     if (error instanceof ValidationError) {
         return res.status(400).json({
             error: error.message,
@@ -200,4 +208,26 @@ exports.deleteHandler = async(req,res) => {
        res.sendStatus(500);
     }
 }
+
+exports.dummyDataHandler = async(req,res) => {
+  try {
+     // delete all. 
+      let finalData = []
+      dummyData.forEach(async (element) => {
+        finalData.push(getMetadataCustom(element))
+     });
+     Promise.all(finalData).then(async data => {
+        await addModel.deleteMany();
+        await addModel.insertMany(data);
+        return res.status(200).json({
+            message:`Data added successfully..`
+        })
+     })
+  }catch(error){
+      console.log(error);
+    res.sendStatus(500);  
+  }
+}
+
+
 

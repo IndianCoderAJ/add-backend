@@ -13,3 +13,27 @@ exports.getPagingData = (data, page, limit) => {
 
     return { totalItems, rows, totalPages, currentPage };
 };
+
+exports.getFilter = (filter) => {
+if(filter.length <= 0) return {}
+let finalFilter = {}
+if(!filter[0].value) return finalFilter;
+finalFilter[`${filter[0].columnField}`] = '';
+    switch(filter[0].operatorValue){
+        case 'contains':
+            finalFilter[`${filter[0].columnField}`] = { "$regex": filter[0].value, "$options": "i" }
+            break
+        case 'equals':
+            finalFilter[`${filter[0].columnField}`] = value;
+            break     
+        case 'startsWith':
+            finalFilter[`${filter[0].columnField}`] = `/^${value}/`;
+            break 
+        case 'endsWith':
+            finalFilter[`${filter[0].columnField}`] = { "$regex": filter[0].value, "$options": "i" }
+            break  
+        default:    
+        finalFilter = {}
+    }
+return finalFilter;
+}
