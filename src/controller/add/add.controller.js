@@ -1,7 +1,8 @@
 const addModel = require("../../Models/add.model");
 const { getPagination,getPagingData } = require("../../utils/paginations");
 const { createAddSchema, updateAddSchema, listAddSchema, getSingleAddSchema, deleteAddSchema } = require("../../utils/validations/add.validation");
-const { ValidationError}  = require('joi')
+const { ValidationError}  = require('joi');
+const { json } = require("body-parser");
 
 // list add
 exports.listHandler = async(req,res) => {
@@ -80,6 +81,14 @@ exports.createHandler = async(req,res) => {
  try{
      await createAddSchema.validateAsync(req.body);
 
+    //get meta data..
+    let url = req.body.content_url;
+    const response = await fetch(url,{mode:'no-cors'});
+    const html = response.text();
+    const doc = domino.createWindow(html).document;
+    const metadata = getMetadata(doc, url);
+    req.body.metadata = JSON.stringify(metadata)
+
      let createAdd = await addModel.create({
          ...req.body
      }) 
@@ -109,13 +118,34 @@ exports.createHandler = async(req,res) => {
 exports.updateHandler = async(req,res) => {
  try{
      await updateAddSchema.validateAsync(req.body);
+
+    //  check name is exist.
+    let existAdd = await addModel.findOne({name:req.body.name});
+    if(existAdd){
+        return res.status(400).json({
+            error:"Add with this name is exits.",
+            success:false
+        })
+    }
+    
+    // check content url changed
+    if(existAdd.content_url !== req.body.content_url){
+        //get meta data..
+        let url = req.body.content_url;
+        const response = await fetch(url,{mode:'no-cors'});
+        const html = response.text();
+        const doc = domino.createWindow(html).document;
+        const metadata = getMetadata(doc, url);
+        req.body.metadata = JSON.stringify(metadata)
+   }
+
      
      let updateAdd = await addModel.findOneAndUpdate({_id:req.body._id},{
          ...req.body
      }) 
 
      if(!updateAdd){
-        return res.status(401).json({
+        return res.status(400).json({
             error:"Add not found.",
             success:false,
             data:null

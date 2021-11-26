@@ -8,7 +8,7 @@ exports.createAddSchema = Joi.object().keys({
     heading:Joi.string().max(30).required(),
     primary_text:Joi.string().max(120).required(),
     destination_url:Joi.string().required(),
-    metadata:Joi.string().required(),
+    // metadata:Joi.string().required(),
 });
 
 exports.updateAddSchema = Joi.object().keys({
@@ -19,7 +19,7 @@ exports.updateAddSchema = Joi.object().keys({
     heading:Joi.string().max(30).required(),
     primary_text:Joi.string().max(120).required(),
     destination_url:Joi.string().required(),
-    metadata:Joi.string().required(),
+    // metadata:Joi.string().required(),
 });
 
 
