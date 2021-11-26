@@ -24,13 +24,13 @@ finalFilter[`${filter[0].columnField}`] = '';
             finalFilter[`${filter[0].columnField}`] = { "$regex": filter[0].value, "$options": "i" }
             break
         case 'equals':
-            finalFilter[`${filter[0].columnField}`] = value;
+            finalFilter[`${filter[0].columnField}`] = { $regex: new RegExp("^" + filter[0].value.toLowerCase(), "i") };
             break     
         case 'startsWith':
-            finalFilter[`${filter[0].columnField}`] = `/^${value}/`;
+            finalFilter[`${filter[0].columnField}`] =  { $regex: new RegExp("^" + filter[0].value.toLowerCase(), "i") };
             break 
         case 'endsWith':
-            finalFilter[`${filter[0].columnField}`] = { "$regex": filter[0].value, "$options": "i" }
+            finalFilter[`${filter[0].columnField}`] =  { $regex: new RegExp("^" + filter[0].value.toLowerCase(), "i") };
             break  
         default:    
         finalFilter = {}
