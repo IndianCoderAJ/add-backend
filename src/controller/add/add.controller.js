@@ -127,7 +127,7 @@ exports.updateHandler = async(req,res) => {
                                         }});
     if(existAdd){
         return res.status(400).json({
-            error:"Add with this name is exits.",
+            error:"Add with this name is already available in the system.",
             success:false
         })
     }
