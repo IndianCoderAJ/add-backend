@@ -2,7 +2,8 @@ const addModel = require("../../Models/add.model");
 const { getPagination,getPagingData } = require("../../utils/paginations");
 const { createAddSchema, updateAddSchema, listAddSchema, getSingleAddSchema, deleteAddSchema } = require("../../utils/validations/add.validation");
 const { ValidationError}  = require('joi');
-const { json } = require("body-parser");
+const {getMetadata} = require('page-metadata-parser');
+const domino = require('domino');
 
 // list add
 exports.listHandler = async(req,res) => {
